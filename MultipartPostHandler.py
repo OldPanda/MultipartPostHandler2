@@ -32,29 +32,34 @@
 # Better deal with None values, don't throw an exception and just send an empty string.
 # Simplified text example
 #
+# 2015/07/12 Jinhui Zhang <zjh0930@gmail.com>
+# Based on what I'm doing, I modified it to accept online file only, so the file url 
+# must be provided. 
+#
+# 2015/07/17 Jinhui Zhang <zjh0930@gmail.com>
+# I modified this handler again to make it accept url directly.
+#
 """
 Usage:
-  Enables the use of multipart/form-data for posting forms
-
+    Enables the use of multipart/form-data for posting forms
 Inspirations:
-  Upload files in python:
-    http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/146306
-  urllib2_file:
-    Fabien Seisen: <fabien@seisen.org>
-
+    Upload files in python:
+        http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/146306
+    urllib2_file:
+        Fabien Seisen: <fabien@seisen.org>
 Example:
-  import MultipartPostHandler, urllib2
-
-  opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler)
-  params = { "username" : "bob", "password" : "riviera",
-             "file" : open("filename", "rb") }
-  opener.open("http://wwww.bobsite.com/upload/", params)
+    import MultipartPostHandler, urllib2
+    opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler)
+    params = { "username" : "bob", "password" : "riviera",
+                "file" : url }
+    opener.open("http://wwww.bobsite.com/upload/", params)
 """
 
 import urllib
 import urllib2
 import mimetools, mimetypes
 import os, stat
+import urlparse
 from cStringIO import StringIO
 
 class Callable:
@@ -62,7 +67,7 @@ class Callable:
         self.__call__ = anycallable
 
 # Controls how sequences are uncoded. If true, elements may be given multiple values by
-#  assigning a sequence.
+# assigning a sequence.
 doseq = 1
 
 class MultipartPostHandler(urllib2.BaseHandler):
@@ -74,11 +79,11 @@ class MultipartPostHandler(urllib2.BaseHandler):
             v_files = []
             v_vars = []
             try:
-                 for(key, value) in data.items():
-                     if type(value) == file:
-                         v_files.append((key, value))
-                     else:
-                         v_vars.append((key, value))
+                for (key, value) in data.items():
+                    if is_url(value):
+                        v_files.append((key, urllib2.urlopen(value)))
+                    else:
+                        v_vars.append((key, value))
             except TypeError:
                 systype, value, traceback = sys.exc_info()
                 raise TypeError, "not a valid non-string sequence or mapping object", traceback
@@ -89,7 +94,7 @@ class MultipartPostHandler(urllib2.BaseHandler):
                 boundary, data = self.multipart_encode(v_vars, v_files)
                 contenttype = 'multipart/form-data; boundary=%s' % boundary
                 if(request.has_header('Content-Type')
-                   and request.get_header('Content-Type').find('multipart/form-data') != 0):
+                    and request.get_header('Content-Type').find('multipart/form-data') != 0):
                     print "Replacing %s with %s" % (request.get_header('content-type'), 'multipart/form-data')
                 request.add_unredirected_header('Content-Type', contenttype)
 
@@ -101,7 +106,7 @@ class MultipartPostHandler(urllib2.BaseHandler):
             boundary = mimetools.choose_boundary()
         if buffer is None:
             buffer = StringIO()
-        for(key, value) in vars:
+        for (key, value) in vars:
             buffer.write('--%s\r\n' % boundary)
             buffer.write('Content-Disposition: form-data; name="%s"' % key)
             buffer.write('\r\nContent-Type: text/plain; charset=utf-8')
@@ -110,15 +115,15 @@ class MultipartPostHandler(urllib2.BaseHandler):
             # if type(value) is not str, we need str(value) to not error with cannot concatenate 'str'
             # and 'dict' or 'tuple' or somethingelse objects
             buffer.write('\r\n\r\n' + str(value) + '\r\n')
-        for(key, fd) in files:
+        for (key, fd) in files:
+            # each file is a urllib.urlopen() instance
             file_size = os.fstat(fd.fileno())[stat.ST_SIZE]
-            filename = fd.name.split('/')[-1]
+            filename = fd.url.split('/')[-1]
             contenttype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
             buffer.write('--%s\r\n' % boundary)
             buffer.write('Content-Disposition: form-data; name="%s"; filename="%s"\r\n' % (key, filename))
             buffer.write('Content-Type: %s; charset=utf-8\r\n' % contenttype)
             buffer.write('Content-Length: %s\r\n' % file_size)
-            fd.seek(0)
             buffer.write('\r\n' + fd.read() + '\r\n')
         buffer.write('--' + boundary + '--\r\n')
         buffer = buffer.getvalue()
@@ -126,3 +131,11 @@ class MultipartPostHandler(urllib2.BaseHandler):
     multipart_encode = Callable(multipart_encode)
 
     https_request = http_request
+
+
+def is_url(string):
+    """Check if the given string is url.
+    """
+    parts = urlparse.urlparse(string)
+    return parts.scheme and parts.netloc
+    

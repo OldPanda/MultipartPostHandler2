@@ -1,3 +1,4 @@
 MultipartPostHandler2.egg-info/
 build/
 dist/
+*.pyc
