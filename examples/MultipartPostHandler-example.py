@@ -9,7 +9,7 @@ def main_url_test():
     """
     import tempfile, sys, os, urllib2, MultipartPostHandler
 
-    validatorURL = "http://validator.w3.org/"
+    validatorURL = "http://validator.w3.org/check"
     opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler)
 
     def validateFile(url):
@@ -20,31 +20,6 @@ def main_url_test():
             "uri" : url }
         print(opener.open(validatorURL, params).read())
         # os.remove(temp[1])
-
-    if len(sys.argv[1:]) > 0:
-        for arg in sys.argv[1:]:
-            validateFile(arg)
-    else:
-        validateFile("http://www.google.com")
-
-
-def main_file_test():
-    """File test
-    """
-    import tempfile, sys, os, urllib2, MultipartPostHandler
-
-    validatorURL = "http://validator.w3.org/"
-    opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler)
-
-    def validateFile(url):
-        temp = tempfile.mkstemp(suffix=".html")
-        os.write(temp[0], opener.open(url).read())
-        print temp
-        params = { "ss" : "0",            # show source
-            "doctype" : "Inline", 
-            "uploaded_file" : open(temp[1], "rb") }
-        print(opener.open(validatorURL, params).read())
-        os.remove(temp[1])
 
     if len(sys.argv[1:]) > 0:
         for arg in sys.argv[1:]:
