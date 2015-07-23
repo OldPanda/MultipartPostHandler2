@@ -3,8 +3,7 @@ MultipartPostHandler2
 
 MultipartPostHandler for Python 2
 
-OldPanda's Update
----
+###OldPanda's Update
 I modified this library to allow uploading file directly from an url. Please refer to **Example** below for basic usage. 
 
 Usage
