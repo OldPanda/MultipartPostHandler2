@@ -53,6 +53,15 @@ Example:
     params = { "username" : "bob", "password" : "riviera",
                 "file" : url }
     opener.open("http://wwww.bobsite.com/upload/", params)
+
+    or
+
+    import MultipartPostHandler, urllib2
+
+    opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler)
+    params = { "username" : "bob", "password" : "riviera",
+                "file" : open("filename", "rb") }
+    opener.open("http://wwww.bobsite.com/upload/", params)
 """
 
 import urllib
@@ -82,6 +91,8 @@ class MultipartPostHandler(urllib2.BaseHandler):
                 for (key, value) in data.items():
                     if is_url(value):
                         v_files.append((key, urllib2.urlopen(value)))
+                    elif type(value) == file:
+                         v_files.append((key, value))
                     else:
                         v_vars.append((key, value))
             except TypeError:
@@ -125,6 +136,7 @@ class MultipartPostHandler(urllib2.BaseHandler):
             buffer.write('Content-Type: %s; charset=utf-8\r\n' % contenttype)
             buffer.write('Content-Length: %s\r\n' % file_size)
             buffer.write('\r\n' + fd.read() + '\r\n')
+            fd.seek(0)
         buffer.write('--' + boundary + '--\r\n')
         buffer = buffer.getvalue()
         return boundary, buffer

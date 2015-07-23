@@ -4,7 +4,7 @@ MultipartPostHandler2
 MultipartPostHandler for Python 2
 
 ###OldPanda's Update
-I modified this library to allow uploading file directly from an url. Please refer to **Example** below for basic usage. 
+I modified this library to allow uploading file directly from an url. 
 
 Usage
 ---   
@@ -24,6 +24,17 @@ import MultipartPostHandler, urllib2
 opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler)
 params = { "username" : "bob", "password" : "riviera",
             "file" : url }
+opener.open("http://wwww.bobsite.com/upload/", params)
+```
+
+or
+
+```
+import MultipartPostHandler, urllib2
+
+opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler)
+params = { "username" : "bob", "password" : "riviera",
+            "file" : open("filename", "rb") }
 opener.open("http://wwww.bobsite.com/upload/", params)
 ```
 
